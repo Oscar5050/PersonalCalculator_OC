@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QApplication
 
 def main_interface():
     app = QApplication([])
-    window = userGUI.MainWindow()
+    window = userGUI.main_window()
     window.show()
     app.exec()
     return 0

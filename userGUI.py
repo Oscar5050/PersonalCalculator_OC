@@ -1,11 +1,16 @@
 import operationFuncion
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel
 
-class MainWindow(QMainWindow):
+class main_window(QMainWindow):
+    
     def __init__(self):
         super().__init__()
+        self.operation = operationFuncion.new_operation()
         self.setWindowTitle("Calculator")
         self.setGeometry(100, 100, 300, 200)
+
+        self.value_label = QLabel(self.operation.get_operation_value(), self)
+        self.value_label.setGeometry(50, 10, 200, 20)
 
         self.add_button = QPushButton("Addition", self)
         self.add_button.setGeometry(50, 30, 200, 30)
@@ -23,22 +28,29 @@ class MainWindow(QMainWindow):
         self.div_button.setGeometry(50, 150, 200, 30)
         self.div_button.clicked.connect(self.perform_division)
 
+    def update_value_label(self):
+        self.value_label.setText(self.operation.get_operation_value())
+
     def perform_addition(self):
-        result = operationFuncion.addition()
+        result = self.operation.addition(self.operation.operation_value)
         print(f"Result: {result}")
+        self.update_value_label()
 
     def perform_subtraction(self):
-        result = operationFuncion.subtraction()
+        result = self.operation.subtraction(self.operation.operation_value)
         print(f"Result: {result}")
+        self.update_value_label()
 
     def perform_multiplication(self):
-        result = operationFuncion.multiplication()
+        result = self.operation.multiplication(self.operation.operation_value)
         print(f"Result: {result}")
+        self.update_value_label()
 
     def perform_division(self):
-        result = operationFuncion.division()
+        result = self.operation.division(self.operation.operation_value)
         print(f"Result: {result}")
+        self.update_value_label()
 
-    def closeEvent(self, event):
+    def close_event(self, event):
         QApplication.quit()
         event.accept()
