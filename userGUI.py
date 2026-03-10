@@ -1,55 +1,121 @@
 import operationFuncion
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel
+import numpy as np
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QMessageBox
 
 class main_window(QMainWindow):
     
     def __init__(self):
         super().__init__()
         self.operation = operationFuncion.new_operation()
-        self.setWindowTitle("Calculator")
-        self.setGeometry(100, 100, 300, 200)
+        self.display_value = np.array([0.0])
+        self.support_value = np.array([0.0])
+        self.op_status = False
+        self.operation_type = None
 
-        self.value_label = QLabel(self.operation.get_operation_value(), self)
+        self.setWindowTitle("Calculator")
+        self.setFixedSize(300, 450)
+
+# Sección de visualización
+
+        self.value_label = QLabel(self.display_value.astype(str)[0], self)
         self.value_label.setGeometry(50, 10, 200, 20)
 
-        self.add_button = QPushButton("Addition", self)
-        self.add_button.setGeometry(50, 30, 200, 30)
-        self.add_button.clicked.connect(self.perform_addition)
+        self.operation_label = QLabel(str(self.operation_type), self)
+        self.operation_label.setGeometry(50, 30, 200, 20)
 
-        self.sub_button = QPushButton("Subtraction", self)
-        self.sub_button.setGeometry(50, 70, 200, 30)
-        self.sub_button.clicked.connect(self.perform_subtraction)
+# Sección de botones numéricos
 
-        self.mul_button = QPushButton("Multiplication", self)
-        self.mul_button.setGeometry(50, 110, 200, 30)
-        self.mul_button.clicked.connect(self.perform_multiplication)
+        button_width, button_height = 50, 30
+        spacing = 10
+        base_x, base_y = 50, 50
+        self.num_buttons = []
+        for i in range(10):
+            btn = QPushButton(str(i), self)
+            row = i // 3
+            col = i % 3
+            x = base_x + col * (button_width + spacing)
+            y = base_y + row * (button_height + spacing)
+            btn.setGeometry(x, y, button_width, button_height)
+            btn.clicked.connect(lambda checked, n=i: self.number_pressed(n))
+            self.num_buttons.append(btn)
 
-        self.div_button = QPushButton("Division", self)
-        self.div_button.setGeometry(50, 150, 200, 30)
-        self.div_button.clicked.connect(self.perform_division)
+# Sección de botones de operaciones
 
-    def update_value_label(self):
-        self.value_label.setText(self.operation.get_operation_value())
+        ops = [
+            ("Addition", self.set_addition),
+            ("Subtraction", self.set_subtraction),
+            ("Multiplication", self.set_multiplication),
+            ("Division", self.set_division),
+        ]
+        button_width, button_height = 200, 30
+        spacing = 40
+        base_x = 50
+        base_y = 210
+        self.op_buttons = []
+        for idx, (label, handler) in enumerate(ops):
+            btn = QPushButton(label, self)
+            btn.setGeometry(base_x, base_y + idx * spacing, button_width, button_height)
+            btn.clicked.connect(handler)
+            self.op_buttons.append(btn)
 
-    def perform_addition(self):
-        result = self.operation.addition(self.operation.operation_value)
-        print(f"Result: {result}")
-        self.update_value_label()
+        self.exe_button = QPushButton("Execute", self)
+        self.exe_button.setGeometry(50, 370, 200, 30)
+        self.exe_button.clicked.connect(lambda: self.execute_operation(self.support_value, self.display_value, self.operation_type))
 
-    def perform_subtraction(self):
-        result = self.operation.subtraction(self.operation.operation_value)
-        print(f"Result: {result}")
-        self.update_value_label()
+# Métodos para configurar las operaciones
 
-    def perform_multiplication(self):
-        result = self.operation.multiplication(self.operation.operation_value)
-        print(f"Result: {result}")
-        self.update_value_label()
+    def update_value_label(self, value):
+        try:
+            self.value_label.setText(value.astype(str)[0])
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
 
-    def perform_division(self):
-        result = self.operation.division(self.operation.operation_value)
-        print(f"Result: {result}")
-        self.update_value_label()
+    def number_pressed(self, n: int):
+        try:
+            if self.op_status:
+                self.display_value = np.array([0.0])
+                self.update_value_label(self.display_value)
+                self.op_status = False
+            current = float(self.display_value[0])
+            new_val = current * 10 + n
+            self.display_value = np.array([new_val])
+            self.update_value_label(self.display_value)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"{e}")
+
+# Métodos para operar
+
+    def set_addition(self):
+        self.support_value = self.display_value
+        self.operation_label.setText("Addition")
+        self.op_status = True
+        self.operation_type = 0
+
+    def set_subtraction(self):
+        self.support_value = self.display_value
+        self.operation_label.setText("Subtraction")
+        self.op_status = True
+        self.operation_type = 1
+
+    def set_multiplication(self):
+        self.support_value = self.display_value
+        self.operation_label.setText("Multiplication")
+        self.op_status = True
+        self.operation_type = 2
+
+    def set_division(self):
+        self.support_value = self.display_value
+        self.operation_label.setText("Division")
+        self.op_status = True
+        self.operation_type = 3
+    
+    def execute_operation(self, value_1, value_2, operation_type):
+        try:
+            self.display_value = self.operation.execute_operation(value_1, value_2, operation_type)
+            self.operation_type = None
+            self.update_value_label(self.display_value)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
 
     def close_event(self, event):
         QApplication.quit()
